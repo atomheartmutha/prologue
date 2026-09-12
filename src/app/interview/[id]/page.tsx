@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 
 type Message = {
   id: string;
@@ -14,6 +15,7 @@ type Interview = {
   topic: string;
   goal: string;
   status: "active" | "completed";
+  subject: { id: string; name: string } | null;
   messages: Message[];
 };
 
@@ -26,6 +28,18 @@ export default function InterviewPage() {
   const [sending, setSending] = useState(false);
   const [ending, setEnding] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const handleSpeechResult = useCallback((transcript: string) => {
+    setDraft(transcript);
+  }, []);
+
+  const {
+    supported: voiceSupported,
+    listening,
+    error: voiceError,
+    start: startListening,
+    stop: stopListening,
+  } = useSpeechRecognition(handleSpeechResult);
 
   useEffect(() => {
     async function load() {
@@ -46,7 +60,6 @@ export default function InterviewPage() {
       }
     }
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -91,26 +104,40 @@ export default function InterviewPage() {
   }
 
   if (!interview) {
-    return <main className="flex-1 px-6 py-12 text-center text-black/50">Loading...</main>;
+    return (
+      <main className="flex-1 px-6 py-12 text-center text-black/50" aria-live="polite">
+        Loading...
+      </main>
+    );
   }
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-8">
       <div className="mb-4 flex items-start justify-between border-b-2 border-black pb-4">
         <div>
+          {interview.subject && (
+            <p className="text-xs font-bold uppercase tracking-wide text-purple">
+              {interview.subject.name}
+            </p>
+          )}
           <h1 className="font-display text-2xl">{interview.topic}</h1>
           <p className="text-sm text-black/60">You&apos;re chatting with an AI interviewer.</p>
         </div>
         <button
           onClick={endInterview}
           disabled={ending || interview.status === "completed"}
-          className="rounded-full border-2 border-black px-4 py-1.5 text-sm font-bold hover:bg-black hover:text-white disabled:opacity-50"
+          className="rounded-full border-2 border-black px-4 py-1.5 text-sm font-bold hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
         >
           {ending ? "Ending..." : "End interview"}
         </button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto py-4">
+      <div
+        className="flex-1 space-y-4 overflow-y-auto py-4"
+        role="log"
+        aria-live="polite"
+        aria-label="Interview transcript"
+      >
         {interview.messages.map((m) => (
           <div
             key={m.id}
@@ -123,6 +150,9 @@ export default function InterviewPage() {
                   : "bg-white border-2 border-black"
               }`}
             >
+              <span className="sr-only">
+                {m.role === "subject" ? "You said: " : "Interviewer said: "}
+              </span>
               {m.content}
             </div>
           </div>
@@ -143,28 +173,52 @@ export default function InterviewPage() {
             e.preventDefault();
             sendMessage();
           }}
-          className="flex gap-2 border-t-2 border-black pt-4"
+          className="border-t-2 border-black pt-4"
         >
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            placeholder="Type your reply..."
-            disabled={sending}
-            className="flex-1 rounded-full border-2 border-black bg-white px-4 py-2 text-sm outline-none focus:border-purple disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={sending || !draft.trim()}
-            className="rounded-full bg-purple px-6 py-2 text-sm font-bold text-white hover:bg-purple-dark disabled:opacity-50"
-          >
-            Send
-          </button>
+          <div className="flex gap-2">
+            <label htmlFor="reply" className="sr-only">
+              Your reply
+            </label>
+            <input
+              id="reply"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder="Type your reply..."
+              disabled={sending}
+              className="flex-1 rounded-full border-2 border-black bg-white px-4 py-2 text-sm outline-none focus-visible:border-purple focus-visible:ring-2 focus-visible:ring-purple disabled:opacity-50"
+            />
+            {voiceSupported && (
+              <button
+                type="button"
+                onClick={listening ? stopListening : startListening}
+                disabled={sending}
+                aria-pressed={listening}
+                aria-label={listening ? "Stop voice input" : "Start voice input"}
+                title={listening ? "Stop voice input" : "Start voice input"}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-black text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50 ${
+                  listening ? "bg-purple text-white" : "bg-white hover:bg-cream"
+                }`}
+              >
+                <span aria-hidden="true">{listening ? "■" : "🎤"}</span>
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={sending || !draft.trim()}
+              className="rounded-full bg-purple px-6 py-2 text-sm font-bold text-white hover:bg-purple-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+          <p aria-live="polite" className="mt-2 text-xs text-black/50">
+            {listening ? "Listening..." : voiceError ?? ""}
+          </p>
         </form>
       ) : (
         <p className="border-t-2 border-black pt-4 text-center text-sm text-black/50">

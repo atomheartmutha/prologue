@@ -7,15 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Subject {
+  id         String      @id @default(cuid())
+  name       String
+  email      String?
+  notes      String?
+  interviews Interview[]
+  createdAt  DateTime    @default(now())
+}
+
 model Interview {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
+  subject   Subject?  @relation(fields: [subjectId], references: [id])
+  subjectId String?
   topic     String
   goal      String
-  status    String   @default("active") // active | completed
+  status    String    @default("active") // active | completed
   messages  Message[]
   analysis  String? // JSON-encoded analysis result
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([subjectId])
 }
 
 model Message {

@@ -14,7 +14,7 @@ export default async function ResultsPage({
 
   const interview = await prisma.interview.findUnique({
     where: { id },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+    include: { messages: { orderBy: { createdAt: "asc" } }, subject: true },
   });
 
   if (!interview) notFound();
@@ -29,6 +29,14 @@ export default async function ResultsPage({
         &larr; Back to all interviews
       </Link>
 
+      {interview.subject && (
+        <Link
+          href={`/subjects/${interview.subject.id}`}
+          className="mb-2 inline-block rounded-full border-2 border-black px-3 py-0.5 text-xs font-bold hover:bg-black hover:text-white"
+        >
+          {interview.subject.name}
+        </Link>
+      )}
       <h1 className="font-display text-3xl">{interview.topic}</h1>
       <p className="mb-8 text-sm text-black/60">{interview.goal}</p>
 

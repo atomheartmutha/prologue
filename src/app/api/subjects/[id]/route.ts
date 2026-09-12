@@ -7,14 +7,19 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const interview = await prisma.interview.findUnique({
+  const subject = await prisma.subject.findUnique({
     where: { id },
-    include: { messages: { orderBy: { createdAt: "asc" } }, subject: true },
+    include: {
+      interviews: {
+        orderBy: { createdAt: "desc" },
+        include: { _count: { select: { messages: true } } },
+      },
+    },
   });
 
-  if (!interview) {
+  if (!subject) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  return NextResponse.json(interview);
+  return NextResponse.json(subject);
 }
