@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bree_Serif, Chivo } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const breeSerif = Bree_Serif({
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-[#F5F4F4] text-black font-body">
         {children}
+        <Analytics />
       </body>
     </html>
   );
