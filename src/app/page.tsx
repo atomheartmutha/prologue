@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import Sparkle from "@/components/Sparkle";
 
 export const dynamic = "force-dynamic";
 
@@ -34,13 +35,14 @@ export default async function DashboardPage({
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
       <div className="mb-8 flex items-center justify-between">
-        <div>
+        <div className="relative">
+          <Sparkle className="sparkle-wiggle absolute -right-6 -top-2 h-5 w-5 text-green" />
           <h1 className="font-display text-4xl">Prologue</h1>
           <p className="text-sm text-black/60">AI-led UX interviews, analyzed automatically.</p>
         </div>
         <Link
           href="/new"
-          className="rounded-full bg-purple px-6 py-3 text-sm font-bold text-white hover:bg-purple-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+          className="btn-pop bg-purple px-6 py-3 text-sm text-white hover:bg-purple-dark"
         >
           New interview
         </Link>
@@ -80,7 +82,7 @@ export default async function DashboardPage({
               <li key={subject.id}>
                 <Link
                   href={`/subjects/${subject.id}`}
-                  className="block rounded-2xl border-2 border-black bg-white p-4 hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+                  className="card-pop block p-4 hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
                 >
                   <p className="font-bold">{subject.name}</p>
                   <p className="text-xs text-black/50">
@@ -94,7 +96,7 @@ export default async function DashboardPage({
         )}
       </section>
 
-      <section>
+      <section className="mb-10">
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-purple">
           {query ? `Results for "${query}"` : "All interviews"}
         </h2>
@@ -106,7 +108,7 @@ export default async function DashboardPage({
               : "No interviews yet. Create one to get a shareable link for a participant."}
           </div>
         ) : (
-          <ul className="divide-y divide-black/10 rounded-2xl border-2 border-black bg-white">
+          <ul className="divide-y divide-black/10 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_0_#000]">
             {interviews.map((interview) => (
               <li key={interview.id} className="flex items-center justify-between px-5 py-4">
                 <div>
@@ -132,6 +134,15 @@ export default async function DashboardPage({
           </ul>
         )}
       </section>
+
+      <footer className="border-t-2 border-black/10 pt-6 text-center text-xs text-black/40">
+        <a href="/api/export" className="font-bold text-purple hover:underline">
+          ⬇ Download all data (.txt)
+        </a>
+        <p className="mt-2">
+          Built with Claude, ElevenLabs (Burt), Backboard, Neon, and Vercel.
+        </p>
+      </footer>
     </main>
   );
 }

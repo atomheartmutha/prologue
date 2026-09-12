@@ -25,6 +25,7 @@ model Interview {
   status    String    @default("active") // active | completed
   messages  Message[]
   analysis  String? // JSON-encoded analysis result
+  backboardThreadId String? // Backboard thread powering the "ask about this interview" chat
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 

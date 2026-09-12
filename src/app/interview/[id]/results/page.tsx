@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Analysis } from "@/lib/anthropic";
+import AskPanel from "./AskPanel";
+import Sparkle from "@/components/Sparkle";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,10 @@ export default async function ResultsPage({
           {interview.subject.name}
         </Link>
       )}
-      <h1 className="font-display text-3xl">{interview.topic}</h1>
+      <div className="relative w-fit">
+        <Sparkle className="sparkle-wiggle absolute -right-6 -top-2 h-4 w-4 text-green" />
+        <h1 className="font-display text-3xl">{interview.topic}</h1>
+      </div>
       <p className="mb-8 text-sm text-black/60">{interview.goal}</p>
 
       {!analysis && interview.status === "active" && (
@@ -56,7 +61,7 @@ export default async function ResultsPage({
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-purple">
               Summary
             </h2>
-            <p className="rounded-2xl border-2 border-black bg-white p-4 text-sm">
+            <p className="rounded-2xl border-2 border-black bg-white p-4 text-sm shadow-[4px_4px_0_0_#000]">
               {analysis.summary}
             </p>
           </section>
@@ -68,7 +73,7 @@ export default async function ResultsPage({
               </h2>
               <ul className="space-y-3">
                 {analysis.themes.map((theme, i) => (
-                  <li key={i} className="rounded-2xl border-2 border-black bg-white p-4">
+                  <li key={i} className="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
                     <p className="font-bold">{theme.title}</p>
                     <p className="text-sm text-black/60">{theme.description}</p>
                   </li>
@@ -84,7 +89,7 @@ export default async function ResultsPage({
               </h2>
               <ul className="space-y-3">
                 {analysis.quotes.map((q, i) => (
-                  <li key={i} className="rounded-2xl border-l-8 border-purple bg-white p-4">
+                  <li key={i} className="rounded-2xl border-l-8 border-purple bg-white p-4 shadow-[4px_4px_0_0_#000]">
                     <p className="italic">&ldquo;{q.quote}&rdquo;</p>
                     <p className="mt-1 text-sm text-black/50">{q.context}</p>
                   </li>
@@ -95,7 +100,13 @@ export default async function ResultsPage({
         </div>
       )}
 
-      <details className="rounded-2xl border-2 border-black bg-white p-4">
+      {interview.messages.length > 0 && (
+        <div className="mb-10">
+          <AskPanel interviewId={interview.id} />
+        </div>
+      )}
+
+      <details className="mb-10 rounded-2xl border-2 border-black bg-white p-4">
         <summary className="cursor-pointer text-sm font-bold">Full transcript</summary>
         <div className="mt-4 space-y-3">
           {interview.messages.map((m) => (

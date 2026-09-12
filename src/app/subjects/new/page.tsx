@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Sparkle from "@/components/Sparkle";
 
 export default function NewSubjectPage() {
   const router = useRouter();
@@ -35,7 +36,10 @@ export default function NewSubjectPage() {
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
-      <h1 className="mb-8 font-display text-3xl">New subject</h1>
+      <div className="relative mb-8 w-fit">
+        <Sparkle className="sparkle-wiggle absolute -right-6 -top-2 h-4 w-4 text-green" />
+        <h1 className="font-display text-3xl">New subject</h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
@@ -89,7 +93,7 @@ export default function NewSubjectPage() {
         <button
           type="submit"
           disabled={loading}
-          className="self-start rounded-full bg-purple px-6 py-3 text-sm font-bold text-white hover:bg-purple-dark disabled:opacity-50"
+          className="btn-pop self-start bg-purple px-6 py-3 text-sm text-white hover:bg-purple-dark disabled:opacity-50"
         >
           {loading ? "Creating..." : "Create subject"}
         </button>

@@ -21,3 +21,47 @@
 body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .card-pop {
+    @apply rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_0_#000] transition-all duration-150;
+  }
+  .card-pop:hover {
+    @apply translate-x-[2px] translate-y-[2px] shadow-[2px_2px_0_0_#000];
+  }
+  .btn-pop {
+    @apply rounded-full border-2 border-black font-bold shadow-[3px_3px_0_0_#000] transition-all duration-150;
+  }
+  .btn-pop:hover {
+    @apply translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0_0_#000];
+  }
+  .btn-pop:active {
+    @apply translate-x-[3px] translate-y-[3px] shadow-none;
+  }
+}
+
+@keyframes sparkle-spin {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.15);
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.sparkle-wiggle {
+  animation: sparkle-spin 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-wiggle {
+    animation: none;
+  }
+  .card-pop,
+  .btn-pop {
+    transition: none;
+  }
+}

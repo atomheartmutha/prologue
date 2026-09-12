@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import Sparkle from "@/components/Sparkle";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +31,15 @@ export default async function SubjectPage({
       </Link>
 
       <div className="mb-8 flex items-center justify-between">
-        <div>
+        <div className="relative">
+          <Sparkle className="sparkle-wiggle absolute -right-6 -top-2 h-4 w-4 text-green" />
           <h1 className="font-display text-3xl">{subject.name}</h1>
           {subject.email && <p className="text-sm text-black/60">{subject.email}</p>}
           {subject.notes && <p className="mt-1 text-sm text-black/50">{subject.notes}</p>}
         </div>
         <Link
           href={`/new?subjectId=${subject.id}&subjectName=${encodeURIComponent(subject.name)}`}
-          className="rounded-full bg-purple px-5 py-2.5 text-sm font-bold text-white hover:bg-purple-dark"
+          className="btn-pop bg-purple px-5 py-2.5 text-sm text-white hover:bg-purple-dark"
         >
           New interview
         </Link>
@@ -52,7 +54,7 @@ export default async function SubjectPage({
           No interviews with {subject.name} yet.
         </div>
       ) : (
-        <ul className="divide-y divide-black/10 rounded-2xl border-2 border-black bg-white">
+        <ul className="divide-y divide-black/10 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_0_#000]">
           {subject.interviews.map((interview) => (
             <li key={interview.id} className="flex items-center justify-between px-5 py-4">
               <div>

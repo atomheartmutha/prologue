@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
+import Sparkle from "@/components/Sparkle";
 
 type Message = {
   id: string;
@@ -170,7 +171,10 @@ export default function InterviewPage() {
               {interview.subject.name}
             </p>
           )}
-          <h1 className="font-display text-2xl">{interview.topic}</h1>
+          <div className="relative w-fit">
+            <Sparkle className="sparkle-wiggle absolute -right-5 -top-1 h-3.5 w-3.5 text-green" />
+            <h1 className="font-display text-2xl">{interview.topic}</h1>
+          </div>
           <p className="text-sm text-black/60">You&apos;re chatting with an AI interviewer.</p>
         </div>
         <div className="flex gap-2">
@@ -208,7 +212,7 @@ export default function InterviewPage() {
             className={`flex ${m.role === "subject" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+              className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-[3px_3px_0_0_#000] ${
                 m.role === "subject"
                   ? "bg-purple text-white"
                   : "bg-white border-2 border-black"
@@ -286,7 +290,7 @@ export default function InterviewPage() {
             <button
               type="submit"
               disabled={sending || !draft.trim()}
-              className="rounded-full bg-purple px-6 py-2 text-sm font-bold text-white hover:bg-purple-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
+              className="btn-pop bg-purple px-6 py-2 text-sm text-white hover:bg-purple-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
             >
               Send
             </button>
