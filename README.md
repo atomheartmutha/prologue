@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prologue
 
-## Getting Started
+AI-led UX interviews with automatic analysis. A researcher creates an interview (topic + goal), a participant chats with an AI interviewer that asks adaptive follow-ups, and ending the interview generates a summary, themes, and quotes.
 
-First, run the development server:
+Live at [prologue-sooty.vercel.app](https://prologue-sooty.vercel.app).
+
+## Stack
+
+- Next.js (App Router) + Tailwind CSS v4
+- Postgres via [Neon](https://neon.tech), accessed with Prisma (`prisma db push`, not migrations)
+- Claude (`@anthropic-ai/sdk`) for both conducting interviews and generating post-interview analysis
+- Deployed on Vercel
+
+## Local development
+
+This project's database is a Neon branch, kept separate from production:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx neon@latest checkout dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This links the project (first run) and pulls that branch's `DATABASE_URL` into `.env`. Local writes only affect the `dev` branch — production reads/writes the `main` branch.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+`npm run dev` doesn't run `prisma db push` automatically — if you change `prisma/schema.prisma`, run:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx prisma db push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+You'll also need `ANTHROPIC_API_KEY` set in `.env` (get one from [console.anthropic.com](https://console.anthropic.com)).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Production deploys via `vercel deploy --prod`. The `build` script runs `prisma db push` against whatever `DATABASE_URL` Vercel injects (from the Neon integration, pointed at the `main` branch) before building.
