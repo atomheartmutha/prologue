@@ -27,7 +27,13 @@ export default function InterviewPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [voiceRepliesEnabled, setVoiceRepliesEnabled] = useState(true);
+  const [needsTapId, setNeedsTapId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const spokenIdsRef = useRef<Set<string>>(new Set());
+  const kickoffStartedRef = useRef(false);
 
   const handleSpeechResult = useCallback((transcript: string) => {
     setDraft(transcript);
@@ -41,13 +47,33 @@ export default function InterviewPage() {
     stop: stopListening,
   } = useSpeechRecognition(handleSpeechResult);
 
+  const speak = useCallback(async (text: string, messageId: string) => {
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok || !audioRef.current) return;
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      audioRef.current.src = url;
+      await audioRef.current.play();
+      setNeedsTapId((current) => (current === messageId ? null : current));
+    } catch {
+      setNeedsTapId(messageId);
+    }
+  }, []);
+
   useEffect(() => {
     async function load() {
       const res = await fetch(`/api/interviews/${id}`);
       const data: Interview = await res.json();
       setInterview(data);
 
-      if (data.status === "active" && data.messages.length === 0) {
+      if (data.status === "active" && data.messages.length === 0 && !kickoffStartedRef.current) {
+        kickoffStartedRef.current = true;
         setSending(true);
         const replyRes = await fetch(`/api/interviews/${id}/messages`, {
           method: "POST",
@@ -65,6 +91,20 @@ export default function InterviewPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [interview?.messages.length, sending]);
+
+  useEffect(() => {
+    if (!sending && interview?.status === "active") {
+      inputRef.current?.focus();
+    }
+  }, [sending, interview?.status]);
+
+  useEffect(() => {
+    if (!interview || !voiceRepliesEnabled) return;
+    const last = interview.messages[interview.messages.length - 1];
+    if (!last || last.role !== "assistant" || spokenIdsRef.current.has(last.id)) return;
+    spokenIdsRef.current.add(last.id);
+    speak(last.content, last.id);
+  }, [interview, voiceRepliesEnabled, speak]);
 
   async function sendMessage() {
     if (!draft.trim() || !interview) return;
@@ -99,8 +139,16 @@ export default function InterviewPage() {
 
   async function endInterview() {
     setEnding(true);
+    audioRef.current?.pause();
     await fetch(`/api/interviews/${id}/complete`, { method: "POST" });
     router.push(`/interview/${id}/results`);
+  }
+
+  function toggleVoiceReplies() {
+    setVoiceRepliesEnabled((enabled) => {
+      if (enabled) audioRef.current?.pause();
+      return !enabled;
+    });
   }
 
   if (!interview) {
@@ -113,6 +161,8 @@ export default function InterviewPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-8">
+      <audio ref={audioRef} className="hidden" />
+
       <div className="mb-4 flex items-start justify-between border-b-2 border-black pb-4">
         <div>
           {interview.subject && (
@@ -123,13 +173,27 @@ export default function InterviewPage() {
           <h1 className="font-display text-2xl">{interview.topic}</h1>
           <p className="text-sm text-black/60">You&apos;re chatting with an AI interviewer.</p>
         </div>
-        <button
-          onClick={endInterview}
-          disabled={ending || interview.status === "completed"}
-          className="rounded-full border-2 border-black px-4 py-1.5 text-sm font-bold hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
-        >
-          {ending ? "Ending..." : "End interview"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={toggleVoiceReplies}
+            aria-pressed={voiceRepliesEnabled}
+            aria-label={voiceRepliesEnabled ? "Turn off voice replies" : "Turn on voice replies"}
+            title={voiceRepliesEnabled ? "Turn off voice replies" : "Turn on voice replies"}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-black text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple ${
+              voiceRepliesEnabled ? "bg-purple text-white" : "bg-white hover:bg-cream"
+            }`}
+          >
+            <span aria-hidden="true">{voiceRepliesEnabled ? "🔊" : "🔇"}</span>
+          </button>
+          <button
+            onClick={endInterview}
+            disabled={ending || interview.status === "completed"}
+            className="rounded-full border-2 border-black px-4 py-1.5 text-sm font-bold hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:opacity-50"
+          >
+            {ending ? "Ending..." : "End interview"}
+          </button>
+        </div>
       </div>
 
       <div
@@ -154,6 +218,15 @@ export default function InterviewPage() {
                 {m.role === "subject" ? "You said: " : "Interviewer said: "}
               </span>
               {m.content}
+              {needsTapId === m.id && (
+                <button
+                  type="button"
+                  onClick={() => speak(m.content, m.id)}
+                  className="ml-2 rounded-full border border-black px-2 py-0.5 text-xs font-bold hover:bg-cream"
+                >
+                  🔊 Play
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -181,6 +254,8 @@ export default function InterviewPage() {
             </label>
             <input
               id="reply"
+              ref={inputRef}
+              autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
