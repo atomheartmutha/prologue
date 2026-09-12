@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import Sparkle from "@/components/Sparkle";
+import { MAX_QUESTIONS } from "@/lib/interviewConfig";
 
 type Message = {
   id: string;
@@ -160,6 +161,11 @@ export default function InterviewPage() {
     );
   }
 
+  const assistantQuestionCount = interview.messages.filter(
+    (m) => m.role === "assistant"
+  ).length;
+  const reachedMax = assistantQuestionCount >= MAX_QUESTIONS;
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-8">
       <audio ref={audioRef} className="hidden" />
@@ -244,7 +250,20 @@ export default function InterviewPage() {
         <div ref={bottomRef} />
       </div>
 
-      {interview.status === "active" ? (
+      {interview.status === "active" && reachedMax ? (
+        <div className="border-t-2 border-black pt-4 text-center">
+          <p className="mb-3 text-sm text-black/60">
+            This interview has reached its natural end.
+          </p>
+          <button
+            onClick={endInterview}
+            disabled={ending}
+            className="btn-pop bg-purple px-6 py-2.5 text-sm text-white hover:bg-purple-dark disabled:opacity-50"
+          >
+            {ending ? "Finishing..." : "Finish & view results"}
+          </button>
+        </div>
+      ) : interview.status === "active" ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();

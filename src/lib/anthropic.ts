@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { MAX_QUESTIONS } from "./interviewConfig";
 
 export const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -18,11 +19,19 @@ export type TranscriptMessage = {
   content: string;
 };
 
-function interviewerSystemPrompt(topic: string, goal: string) {
+function interviewerSystemPrompt(
+  topic: string,
+  goal: string,
+  questionNumber: number
+) {
+  const isClosing = questionNumber >= MAX_QUESTIONS;
+
   return `You are Prologue, a skilled UX researcher conducting a live, conversational interview with a research participant.
 
 Interview topic: ${topic}
 Research goal: ${goal}
+
+This is question ${questionNumber} of a maximum of ${MAX_QUESTIONS} for this interview.
 
 Rules:
 - Ask ONE question at a time. Never bundle multiple questions into one message.
@@ -30,7 +39,12 @@ Rules:
 - Actively follow up on specifics the participant mentions ("you said X, can you tell me more about that?") rather than working through a rigid script.
 - Keep your messages short (1-4 sentences).
 - Do not summarize, analyze, or break character. You are only conducting the interview.
-- If this is the very first message (no prior conversation), briefly introduce yourself in one sentence, explain what the interview is about in one sentence, and then ask your first question.`;
+- If this is the very first message (no prior conversation), briefly introduce yourself in one sentence, explain what the interview is about in one sentence, and then ask your first question.
+${
+  isClosing
+    ? `- This is the FINAL turn of the interview, and the participant will not be able to reply after this message. Do NOT ask a question of any kind. Instead, warmly thank the participant for their time and insights, briefly note one thing you appreciated hearing, and clearly state that the interview is now complete.`
+    : ""
+}`;
 }
 
 export async function generateInterviewerReply(
@@ -38,6 +52,8 @@ export async function generateInterviewerReply(
   goal: string,
   transcript: TranscriptMessage[]
 ): Promise<string> {
+  const questionNumber = transcript.filter((m) => m.role === "assistant").length + 1;
+
   const messages: Anthropic.MessageParam[] =
     transcript.length === 0
       ? [{ role: "user", content: "[Begin the interview now.]" }]
@@ -48,12 +64,13 @@ export async function generateInterviewerReply(
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 300,
-    system: interviewerSystemPrompt(topic, goal),
+    max_tokens: 500,
+    system: interviewerSystemPrompt(topic, goal, questionNumber),
     messages,
   });
 
-  return extractText(response);
+  const text = extractText(response);
+  return text || "Sorry, could you say that again?";
 }
 
 export type Analysis = {
