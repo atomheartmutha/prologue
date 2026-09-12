@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Interview {
+  id        String   @id @default(cuid())
+  topic     String
+  goal      String
+  status    String   @default("active") // active | completed
+  messages  Message[]
+  analysis  String? // JSON-encoded analysis result
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  interviewId String
+  role        String // "assistant" | "subject"
+  content     String
+  createdAt   DateTime  @default(now())
+}

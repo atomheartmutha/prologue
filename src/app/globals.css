@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --color-purple: #62008f;
+  --color-purple-dark: #2a003d;
+  --color-cream: #f5f4f4;
+  --color-yellow: #feed00;
+  --color-green: #92d557;
+}
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --color-purple: var(--color-purple);
+  --color-purple-dark: var(--color-purple-dark);
+  --color-cream: var(--color-cream);
+  --color-yellow: var(--color-yellow);
+  --color-green: var(--color-green);
+}
+
+body {
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
