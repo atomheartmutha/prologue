@@ -14,6 +14,9 @@ jobs:
             const token = await core.getIDToken('https://api.anthropic.com');
             core.setSecret(token);
             core.exportVariable('JWT', token);
+      - name: Decode OIDC token claims (debug)
+        run: |
+          echo "$JWT" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq .
       - name: Exchange for an Anthropic access token
         run: |
           curl -sS https://api.anthropic.com/v1/oauth/token \
